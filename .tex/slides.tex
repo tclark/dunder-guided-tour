@@ -172,8 +172,8 @@
   
   \begin{Verbatim}[commandchars=\\\{\}]
   >>> class Parrot:
-  ...   def __init__(self, type, alive):
-  ...     self.type = type
+  ...   def __init__(self, breed, alive):
+  ...     self.breed = breed
   ...     self.alive = alive
   ...
   >>> p = Parrot("Norwegian Blue", True)
@@ -204,14 +204,14 @@
   \begin{Verbatim}
   >>> class Parrot:
   ...   def __init__(self, type, alive):
-  ...     self.type = type
+  ...     self.breed = breed
   ...     self.alive = alive
   ...   def __str__(self):
   ...     if self.alive:
-  ...       return f'{self.type} parrot'
+  ...       return f'{self.breed} parrot'
   ...     return 'This is an ex-parrot!'
   ...   def __repr__(self):
-  ...     return f"Parrot('{self.type}', {self.alive})"
+  ...     return f"Parrot('{self.breed}', {self.alive})"
   ...
     \end{Verbatim}
  \end{frame}
