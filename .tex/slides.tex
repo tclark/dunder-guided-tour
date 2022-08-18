@@ -1,0 +1,761 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{default}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+
+\newcommand\codeHighlight[1]{\textcolor[rgb]{1,0,0}{\textbf{#1}}}
+
+\title{A Guided Tour of Dunder Methods}
+
+\author{Tom Clark}
+\date{}
+\begin{document}
+
+
+%----------- titlepage ----------------------------------------------%
+\begin{frame}[plain]
+  \titlepage
+  
+  \centerline{Before we start, you will want to clone the repository at}
+  \centerline{ \url{https://github.com/tclark/dunder-guided-tour}.}
+\end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{Python!}
+  
+  There is plenty to love about Python, but in particular I love its clean and expressive syntax.
+  \bigbreak
+  
+  Let's take a moment to appreciate how cool Python's strings are.
+  
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Strings are great}
+  
+  \begin{verbatim}
+  >>> s1 = "Spam"
+  >>> s2 = "Cheese"
+  \end{verbatim}  
+  We can compare them
+  \begin{verbatim}
+  >>> s1 == s2
+  False
+  >>> s1 < s2
+  False
+  \end{verbatim}  
+  and even do some arithmetic.
+  \begin{verbatim}
+  >>> s1 + s2
+  'SpamCheese'
+  >>> 3 * s1
+  'SpamSpamSpam'
+  \end{verbatim}
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Strings are great}
+  
+  \begin{verbatim}
+  >>> s = "Spanish Inquisition"
+  \end{verbatim}  
+  Loops!
+  \begin{verbatim}
+  >>> for c in s:
+  ...   print(c)
+  ...
+  S
+  p
+  a
+  ...  
+  \end{verbatim}
+  
+  \end{frame}
+
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Strings are great}
+  
+  \begin{verbatim}
+  >>> s = "And now for something completely different"
+  \end{verbatim}  
+  We can access individual elements by index.
+  \begin{verbatim}
+  >>> s[4]
+  'n'
+  >>> s[-1]
+  't'
+  \end{verbatim}  
+  We can slice them
+  \begin{verbatim}
+  >>> s[3:10:2]
+  ' o o'
+  \end{verbatim}
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{Dunder Methods}
+  
+  Strings and other built-in types get much of their power from the way
+  they support operations like these, but it doesn't stop there.
+  
+  \bigbreak
+  
+  We can give our own classes the same expressive power by implementing the right
+  \emph{dunder methods}.
+  \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{You've seen these}
+  
+  \begin{Verbatim}[commandchars=\\\{\}]
+  
+  class StorageJar:
+      
+      def \codeHighlight{__init__}(self, type):
+          self.type = type
+          
+  
+  jar = StorageJar("2 oz")         
+  
+  \end{Verbatim}
+  \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{Warnings}
+  
+  \begin{itemize}
+    \item You can create your own methods or attributes with double-underscored names. Don't do it.
+    \item You can use an ``official" dunder method name but write the function so that its signature doesn't conform. Don't do it.
+  \end{itemize}  
+  
+  Don't be reason we can't have nice things.
+  \end{frame}
+  
+ %----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{The plan}
+  
+  We're going to look at some common Python features and see how our classes can work with them by implementing the necessary dunder methods
+  
+  \begin{itemize}
+    \item String output
+    \item Operator overloading
+    \item Iterators
+    \item Sequences
+    \item Context managers
+  \end{itemize}
+  
+  After we look at each one, we'll take a few minutes to do some hands-on coding examples before proceeding to the next.  
+  \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  \centerline{\huge String output}
+ \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Representing an object as a string}
+  
+  \begin{Verbatim}[commandchars=\\\{\}]
+  >>> class Parrot:
+  ...   def __init__(self, type, alive):
+  ...     self.type = type
+  ...     self.alive = alive
+  ...
+  >>> p = Parrot("Norwegian Blue", True)
+  >>> print(p)
+  <__main__.Parrot object at 0x1012a8490>
+  \end{Verbatim}
+  
+  \bigbreak
+  \texttt{p} is of type \texttt{Parrot}, but the \texttt{print()} function needs a string. So what's happening?
+  \end{frame}
+  
+ %----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{Obtaining a string from an object} 
+  
+   When we invoke \texttt{print(p)}
+   
+   \begin{enumerate}
+     \item The interpreter checks whether the \texttt{Parrot} class implements \texttt{\_\_str\_\_()}. It doesn't.
+     \item The interpreter falls back to using the \texttt{\_\_repr\_\_()} method. \texttt{Parrot} doesn't override it, so its parent implementation is used.
+   \end{enumerate}  
+ \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{With dunders}
+  
+  \begin{Verbatim}
+  >>> class Parrot:
+  ...   def __init__(self, type, alive):
+  ...     self.type = type
+  ...     self.alive = alive
+  ...   def __str__(self):
+  ...     if self.alive:
+  ...       return f'{self.type} parrot'
+  ...     return 'This is an ex-parrot!'
+  ...   def __repr__(self):
+  ...     return f"Parrot('{self.type}', {self.alive})"
+  ...
+    \end{Verbatim}
+ \end{frame}
+  
+  
+ %----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{With dunders}
+  
+  \begin{Verbatim}
+  >>> p = Parrot('Norwegian Blue', True)
+  >>> print(p)
+  Norwegian Blue parrot
+  >>> str(p)
+  'Norwegian Blue parrot'
+  >>> repr(p)
+  "Parrot('Norwegian Blue', True)"  
+  \end{Verbatim}
+ \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{Guidelines} 
+  
+   
+   
+   \begin{enumerate}
+     \item \texttt{\_\_str\_\_()} should return a user-friendly string.
+     \item \texttt{\_\_repr\_\_()} should return a developer-friendly string. When practical, a string representing the call to the constructor that produces the object in preferred.
+   \end{enumerate}  
+ \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+   
+   \centerline{\huge Practice} 
+   \centerline{See the \texttt{strings} directory in the tutorial repo.} 
+   
+   \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  \centerline{\huge Operator overloading}
+ \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Recall what we know about strings}
+  
+  \begin{verbatim}
+  >>> s1 = "Spam"
+  >>> s2 = "Cheese"
+  \end{verbatim}  
+  We can compare them
+  \begin{verbatim}
+  >>> s1 == s2
+  False
+  >>> s1 < s2
+  False
+  \end{verbatim}  
+  and even do some arithmetic.
+  \begin{verbatim}
+  >>> s1 + s2
+  'SpamCheese'
+  >>> 3 * s1
+  'SpamSpamSpam'
+  \end{verbatim}
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  
+  Like many languages, Python supports a range operators that we typically associate with numbers. 
+  Strings are not numbers, but for \emph{some} operators it's easy enough to imagine analogous operations so 
+  Python overloads the operators.
+  
+  \bigbreak
+  If you can imagine analogous operations for your own classes, you can implement operator overloading by defining the right dunder methods.
+  
+ \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Feeling a bit peckish}
+  
+  \begin{Verbatim}
+  >>> class Cheese:
+  ...   def __init__(self, name, runniness):
+  ...     self.name = name
+  ...     self.runniness = runniness
+  ...     self.available = False  
+  \end{Verbatim}
+  
+  \bigbreak
+  Cheese is great, and we should be able to sort out what \texttt{==} means for cheeses.
+ \end{frame}
+  
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Cheesy equality}
+  
+  \begin{Verbatim}
+  ...   def __eq__(self, other):
+  ...     if isinstance(other, Cheese):
+  ...       return (self.name == other.name 
+  ...         and self.runniness == other.runniness)
+  ...     return NotImplemented
+  ...      
+  \end{Verbatim}
+  
+  \bigbreak
+  Two things to notice:
+  \begin{itemize}
+    \item We check the type of \texttt{other} to be sure we can handle the comparison.
+    \item Rather than raising an exception, we return the special object \texttt{NotImplemented} if we can't make a comparison with other.
+  \end{itemize}
+ \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Comparing}
+  
+  \begin{Verbatim}
+  >>> class Fruit:
+  ...   def __init__(self, name):
+  ...     self.name = name
+  ...
+  >>> edam = Cheese('Edam', 1)
+  >>> cheddar = Cheese('Cheddar', 1)
+  >>> apple = Fruit('Apple')
+  >>> edam == cheddar
+  False
+  >>> edam == apple
+  False
+  >>> edam == edam
+  True
+  \end{Verbatim}
+  
+  \bigbreak
+  Notice that no exception is raised, even when comparing fruit. This may or may not be a good thing.
+ \end{frame}
+ 
+\begin{frame}
+  \frametitle{Comparison operators and their dunders}
+  
+
+\begin{tabular}{l l}
+ 
+ ==    & \texttt{\_\_eq\_\_()} \\ 
+ !=    & \texttt{\_\_ne\_\_()} \\ 
+ $>$  & \texttt{\_\_gt\_\_()} \\ 
+ $>$=    & \texttt{\_\_ge\_\_()} \\ 
+ $<$   & \texttt{\_\_lt\_\_()} \\ 
+  $<$=  & \texttt{\_\_le\_\_()} \\ 
+\end{tabular}
+
+Some notes:
+\begin{itemize}
+  \item You don't have to override any or all of these if they don't make sense for your classes.
+  \item If you override ==, you get != ``for free", but best practise is to explicitly override !=.
+  \item If you want to override all of these, see \texttt{functools.total\_ordering}.
+\end{itemize}
+\end{frame} 
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Arithmetic} 
+  
+  Suppose (bear with me) we wanted to add various \texttt{Cheese}s together to make some sort of Frankencheese? Again, we implement the 
+  right dunder method.  
+  
+  \begin{verbatim}
+  ...   def __add__(self, other):
+  ...     if isinstance(other, Cheese):
+  ...       newname = self.name + '/' + other.name
+  ...       newrunny = (self.runniness + other.runniness) // 2  
+  ...       return Cheese(newname, newrunny) 
+  ...     return NotImplemented
+  \end{verbatim}
+   \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{More arithmetic} 
+  
+  If we can add two \texttt{Cheese}s, then it also makes sense that we could multiply a \texttt{Cheese} and an integer.  For this slightly more complicated case we would need to 
+  \bigbreak
+  
+  \begin{itemize}
+    \item Implement \texttt{\_\_mul\_\_()}, for expressions like \texttt{colby * 3}. 
+    \item Implement \texttt{\_\_rmul\_\_()}, for expressions like \texttt{3 * colby}.
+    \item We might also want \texttt{\_\_imul\_\_()}, to support expressions like \texttt{colby *= 3}.
+  \end{itemize}
+  \bigbreak
+  
+  The actual implementations are left as an exercise (really). 
+  
+  \bigbreak
+  See \url{https://docs.python.org/3.6/reference/datamodel.html?highlight=data model#emulating-numeric-types}
+  \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+   
+   \centerline{\huge Practice} 
+   \centerline{See the \texttt{operators} directory in the tutorial repo.} 
+   
+   \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  \centerline{\huge Iterators}
+ \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Again, recall strings}
+  
+  \begin{verbatim}
+  >>> s = "Spanish Inquisition" 
+  >>> for c in s:
+  ...   print(c)
+  ...
+  S
+  p
+  a
+  ...  
+  \end{verbatim}
+  \bigbreak
+  
+  We say that Python strings are \emph{Iterables}, which means that they can supply 
+  \emph{Iterators} that let us access their elements one at a time.
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Iterables/Iterators} 
+  
+    
+  \begin{itemize}
+    \item Iterables implement \texttt{\_\_iter\_\_()}, which returns an Iterator 
+    \item Iterators implement \texttt{\_\_next\_\_()}, which returns successive elements from the iterable collection. When the elements have been exhausted, \texttt{\_\_next\_\_()} raises a \texttt{StopIteration} exception.
+  \end{itemize}
+ 
+    
+    \bigbreak
+    To be clear, these are two distinct but related objects\footnote{Usually}.
+    \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Example: I'll have your spam}
+  
+  \begin{verbatim}
+  >>> class Breakfast:
+  ...   def __init__(self, items):
+  ...     self.items = items
+  ...
+  >>> my_items = ['spam', 'spam', 'spam', 'spam', 'spam',
+  ... 'spam', 'spam', 'baked beans', 'spam', 'spam', 'spam']
+  >>> brekky = Breakfast(my_items)
+  \end{verbatim}
+  \bigbreak
+  
+  It would be nice to be able to iterate over all that spam.
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{First approach}
+  
+  \begin{verbatim}
+  ...   def __iter__(self):
+  ...     return iter(self.items)
+  ...
+  \end{verbatim}
+  \bigbreak
+  
+  \texttt{self.items} is a list, which is iterable. We just ask for its iterator.
+ 
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Second approach}
+  
+  \begin{verbatim}
+  ...   def __iter__(self):
+  ...     for item in self.items:
+  ...       yield item
+  ...
+  \end{verbatim}
+  \bigbreak
+  
+  This generator function returns a type of iterator
+ 
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Third approach}
+  
+  \begin{verbatim}
+  ...   def __iter__(self):
+  ...     return BreakfastIterator(self)
+  ...
+  \end{verbatim}
+  \bigbreak
+  
+  For this we need to supply a \texttt{BreakfastIterator} class that implements
+  \texttt{\_\_next\_\_()}
+ 
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{End result}
+  
+  Whichever approach we use, we can now do this with our \texttt{Breakfast}.
+  
+  \begin{verbatim}
+  >>> for food in brekky:
+  ...   if food == 'spam':
+  ...     eat(food)
+  \end{verbatim}
+   
+  \end{frame}
+
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+   
+   \centerline{\huge Practice} 
+   \centerline{See the \texttt{iterators} directory in the tutorial repo.} 
+   
+   \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  \centerline{\huge Sequences}
+ \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Hey, let's consider strings one more time}
+  
+  \begin{verbatim}
+  >>> s = "And now for something completely different"
+  >>> s[4]
+  'n'
+  >>> s[-1]
+  't'
+  >>> s[3:10:2]
+  ' o o'
+  \end{verbatim}
+  
+  \bigbreak
+  We can access a string's elements with an integer index or a slice because strings are \emph{sequences}.
+  
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{More spam}
+  
+  \begin{verbatim}
+  >>> class Breakfast:
+  ...   def __init__(self, items):
+  ...     self.items = items
+  ...
+  >>> my_items = ['spam', 'spam', 'spam', 'spam', 'spam',
+  ... 'spam', 'spam', 'baked beans', 'spam', 'spam', 'spam']
+  >>> brekky = Breakfast(my_items)
+  \end{verbatim}
+  \bigbreak
+  
+  It makes some sense to be able to treat our \texttt{Breakfast} objects as sequences.
+  
+  \end{frame}
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{First approach}
+  
+  \begin{verbatim}
+  ...   def __getitem__(self, key):
+  ...     return self.items[key]
+  ...
+  ...   def __len__(self):
+  ...     return len(self.items)
+  \end{verbatim}
+  \bigbreak
+  
+  This works pretty well since \texttt{self.items} is a list, which is also a sequence, so we just delegate the work to the list.
+  I do, however, have an issue with this.
+ 
+  \end{frame}
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Second approach}
+  
+  \begin{verbatim}
+  ...   def __getitem__(self, key):
+  ...     if isinstance(key, slice):
+  ...       return Breakfast(self.items[key])
+  ...     return self.items[key]
+  ...
+  \end{verbatim}
+  \bigbreak
+  
+  When we take a \emph{slice} of a \texttt{Breakfast}, the result should be also be a \texttt{Breakfast}.
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+ \begin{frame}
+   \frametitle{Mutable vs. immutable sequences}
+   
+   If our sequence is meant to be immutable, then we need only implement \texttt{\_\_getitem\_\_()}
+   and \texttt{\_\_len\_\_()}.
+   
+   \bigbreak
+   
+   For mutable sequences we need to implement some other dunders. \texttt{Breakfast} is pretty mutable.
+ \end{frame}  
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Methods for mutability}
+  
+  \begin{verbatim}
+  ...   def __setitem__(self, key, val):
+  ...     self.items[key] = val
+  ...
+  ...   def __delitem__(self, key):
+  ...     del self.items[key]
+  ...
+  ...   def insert(self, key, val):
+  ...     self.items.insert(key, val) 
+
+  \end{verbatim}
+  
+  \bigbreak
+  See \url{https://docs.python.org/3/library/collections.abc.html}
+ \end{frame}
+
+
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+   
+   \centerline{\huge Practice} 
+   \centerline{See the \texttt{sequences} directory in the tutorial repo.} 
+   
+   \end{frame}
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+  \centerline{\huge Context managers}
+ \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Oh, an example that's not a string.}
+  
+  \begin{verbatim}
+  >>> with open("life_of_brian", "r") as script:
+  ...   for line in script:
+  ...     print(line)
+  ...  
+  \end{verbatim}
+  
+  \bigbreak 
+  This is an elegant way to read a file. The thing that makes it work is a \emph{Context Manager},
+  which is supplied by the call to \texttt{open()}.
+  
+  \end{frame}
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Required dunders}
+  
+  For a object to serve as a context manager, it needs to implement two dunders
+  
+  \bigbreak
+  \texttt{\_\_enter\_\_()}, which prepares resources to be used in the code block defined by the \texttt{with} statement,
+  and which is executed as the block is entered.
+  
+  \bigbreak
+  \texttt{\_\_exit\_\_()}, which cleans up resources, and is executed when the code block is exited.
+
+  \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Example context manager}
+  
+  \begin{verbatim}
+  >>> class Announcer:
+  ...   def __enter__(self):
+  ...     print("It's...")
+  ...
+  ...   def __exit__(self, ex_type, ex_val, ex_trace):
+  ...     print("And now for something completely different.")
+  ...
+  \end{verbatim}
+  
+    
+  \end{frame}
+
+%----------- frame ----------------------------------------------%
+\begin{frame}[fragile]
+  \frametitle{Example context manager}
+  
+  \begin{verbatim}
+  >>> with Announcer():
+  ...   print("Monty Python's Flying Circus")
+  ...
+  It's...
+  Monty Python's Flying Circus
+  And now for something completely different.  
+  
+  \end{verbatim}
+  
+    
+  \end{frame}
+ 
+%----------- frame ----------------------------------------------%
+\begin{frame}
+  \frametitle{} 
+   
+   \centerline{\huge Practice} 
+   \centerline{See the \texttt{contexts} directory in the tutorial repo.} 
+   
+   \end{frame}
+
+
+
+
+\end{document}
