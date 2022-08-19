@@ -20,6 +20,11 @@ class Cheese:
                 and self.runniness == other.runniness)
         return NotImplemented
 
+    def __ne__(self, other):
+        if isinstance(other, Cheese):
+            return not self.__eq__(self, other)
+        return NotImplemented
+
     def __add__(self, other):    
         if isinstance(other, Cheese):
             newname = self.name + '/' + other.name
@@ -27,6 +32,35 @@ class Cheese:
             return Cheese(newname, newrunny)
         return NotImplemented    
 
+    def __mul__(self, other):    
+        if isinstance(other, int):
+            if other < 0:
+                raise ValueError('Can only multiply Cheese by a positive int')
+            newname = (self.name + '/') * other
+            return Cheese(newname[:-1], self.runniness)
+        return NotImplemented
+
+    def __rmul__(self, other):    
+        if isinstance(other, int):
+            return self.__mul__(other)
+        return NotImplemented
+
+    def __imul__(self, other):    
+        if isinstance(other, int):
+            return self.__mul__(other)
+        return NotImplemented
+
+
+edam = Cheese('edam', 1)
+triple_edam = edam * 3
+print(triple_edam)
+quad_edam = 4 * edam
+print(quad_edam)
+edam *= 2
+print(edam)
+# We can't multiply a Cheese with a non-positive number 
+# because there's no sensible interpretation of that
+#edam * -1 # raises an exception
 
 # Implement __eq__() for EgalitarianCracker. These crackers
 # Think they're equal to any other object of any type.
@@ -37,4 +71,11 @@ class EgalitarianCracker:
 
     def __init__(self, name):
         self.name = name
+
+    def __eq__(self, other):
+        return True
+
+cheddar = Cheese('cheddar', 1)
+multigrain = EgalitarianCracker('multigrain')
+print(cheddar == multigrain)
 
